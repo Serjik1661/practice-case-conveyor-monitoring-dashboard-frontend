@@ -1,73 +1,84 @@
-# React + TypeScript + Vite
+# Conveyor Monitoring Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## О проекте
 
-Currently, two official plugins are available:
+**Conveyor Monitoring Dashboard** — это frontend-проект дашборда для мониторинга конвейерных линий.  
+Приложение предназначено для отображения состояния линий, просмотра инцидентов, работы с карточкой инцидента и анализа сводных данных по сменам.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Проект реализован как **SPA (Single Page Application)** на **React + TypeScript + Vite**.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Цель проекта
 
-## Expanding the ESLint configuration
+Цель проекта — создать удобный интерфейс мониторинга, который позволяет:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- быстро оценивать состояние конвейерных линий;
+- видеть тревожные события и проблемные зоны;
+- просматривать список инцидентов;
+- работать с карточкой одного инцидента;
+- получать сводную информацию по дате и смене.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Что реализовано на текущем этапе
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 1. Страница "Обзор"
+- вывод тестовых конвейерных линий;
+- отображение статуса, скорости, нагрузки, количества камер и тревог;
+- фильтрация по статусам;
+- визуальное выделение тревожных линий;
+- приглушение offline-линий.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Страница "Инциденты"
+- список тестовых инцидентов;
+- отображение статуса, ответственного, комментария и даты создания;
+- ссылка на детальную карточку инцидента.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 3. Страница "Карточка инцидента"
+- отображение подробной информации по выбранному инциденту;
+- история статусов;
+- локальная форма изменения статуса;
+- валидация: при выборе статуса `resolved` комментарий обязателен.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 4. Страница "Отчёт"
+- выбор даты;
+- выбор смены;
+- вывод сводной статистики;
+- отображение данных по часам;
+- отображение данных по линиям.
+
+### 5. Деплой
+Проект опубликован онлайн и доступен по ссылке:
+
+[Открыть проект](https://practice-case-conveyor-monitoring-d.vercel.app/)
+
+---
+
+## Технологии
+
+- **React**
+- **TypeScript**
+- **Vite**
+- **React Router**
+- **Mock data**
+- **Vercel** для деплоя
+
+---
+
+## Структура проекта
+
+```text
+src/
+  mocks/
+    fixtures.ts
+  pages/
+    OverviewPage.tsx
+    IncidentsPage.tsx
+    IncidentPage.tsx
+    ReportPage.tsx
+  shared/
+    types/
+      index.ts
+  App.tsx
+  main.tsx
