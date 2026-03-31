@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { conveyorLines, incidents } from '../mocks/fixtures'
 
+type IncidentStatus = 'open' | 'in_progress' | 'resolved'
+
 const getStatusLabel = (status: string) => {
   if (status === 'open') return 'Открыт'
   if (status === 'in_progress') return 'В работе'
@@ -14,6 +16,26 @@ function IncidentPage() {
   const { id } = useParams()
 
   const incident = incidents.find((item) => item.id === id)
+  const line = conveyorLines.find((item) => item.id === incident?.lineId)
+
+  const [currentStatus, setCurrentStatus] = useState<IncidentStatus>(
+    incident?.status ?? 'open',
+  )
+  const [currentAssignee, setCurrentAssignee] = useState(
+    incident?.assignee ?? '',
+  )
+  const [currentComment, setCurrentComment] = useState(
+    incident?.comment ?? '',
+  )
+  const [history, setHistory] = useState(incident?.statusHistory ?? [])
+
+  const [formStatus, setFormStatus] = useState<IncidentStatus>(
+    incident?.status ?? 'open',
+  )
+  const [formAssignee, setFormAssignee] = useState(incident?.assignee ?? '')
+  const [formComment, setFormComment] = useState('')
+
+  const [error, setError] = useState('')
 
   if (!incident) {
     return (
@@ -23,19 +45,6 @@ function IncidentPage() {
       </div>
     )
   }
-
-  const line = conveyorLines.find((item) => item.id === incident.lineId)
-
-  const [currentStatus, setCurrentStatus] = useState(incident.status)
-  const [currentAssignee, setCurrentAssignee] = useState(incident.assignee ?? '')
-  const [currentComment, setCurrentComment] = useState(incident.comment ?? '')
-  const [history, setHistory] = useState(incident.statusHistory)
-
-  const [formStatus, setFormStatus] = useState(incident.status)
-  const [formAssignee, setFormAssignee] = useState(incident.assignee ?? '')
-  const [formComment, setFormComment] = useState('')
-
-  const [error, setError] = useState('')
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
