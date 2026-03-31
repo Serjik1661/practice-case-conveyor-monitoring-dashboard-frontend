@@ -1,4 +1,4 @@
-import type { ConveyorLine } from '../shared/types/index'
+import type { ConveyorLine } from '../shared/types'
 import { conveyorLines } from '../mocks/fixtures'
 
 const statusLabels: Record<ConveyorLine['status'], string> = {
@@ -6,6 +6,13 @@ const statusLabels: Record<ConveyorLine['status'], string> = {
   alarm: 'Тревога',
   idle: 'Ожидание',
   offline: 'Оффлайн',
+}
+
+const statusColors: Record<ConveyorLine['status'], string> = {
+  active: '#22c55e',
+  alarm: '#ef4444',
+  idle: '#f59e0b',
+  offline: '#6b7280',
 }
 
 function OverviewPage() {
@@ -33,7 +40,35 @@ function OverviewPage() {
             }}
           >
             <h3>{line.name}</h3>
-            <p>Статус: {statusLabels[line.status]}</p>
+
+            <p
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              Статус:
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: statusColors[line.status],
+                    display: 'inline-block',
+                  }}
+                />
+                {statusLabels[line.status]}
+              </span>
+            </p>
+
             <p>Скорость: {line.speed} м/с</p>
             <p>Нагрузка: {line.load}%</p>
             <p>Камер: {line.cameraCount}</p>
