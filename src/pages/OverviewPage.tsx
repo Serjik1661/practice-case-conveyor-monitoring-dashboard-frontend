@@ -97,52 +97,62 @@ function OverviewPage() {
           marginTop: '20px',
         }}
       >
-        {filteredLines.map((line) => (
-          <div
-            key={line.id}
-            style={{
-              border: '1px solid #444',
-              borderRadius: '12px',
-              padding: '16px',
-              textAlign: 'left',
-            }}
-          >
-            <h3>{line.name}</h3>
+        {filteredLines.map((line) => {
+          const isAlarm = line.status === 'alarm'
+          const isOffline = line.status === 'offline'
 
-            <p
+          return (
+            <div
+              key={line.id}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
+                border: isAlarm ? '1px solid #ef4444' : '1px solid #444',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'left',
+                background: isAlarm
+                  ? 'rgba(239, 68, 68, 0.08)'
+                  : 'transparent',
+                opacity: isOffline ? 0.55 : 1,
+                transition: '0.2s ease',
               }}
             >
-              Статус:
-              <span
+              <h3>{line.name}</h3>
+
+              <p
                 style={{
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
                 }}
               >
+                Статус:
                 <span
                   style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    backgroundColor: statusColors[line.status],
-                    display: 'inline-block',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
                   }}
-                />
-                {statusLabels[line.status]}
-              </span>
-            </p>
+                >
+                  <span
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      backgroundColor: statusColors[line.status],
+                      display: 'inline-block',
+                    }}
+                  />
+                  {statusLabels[line.status]}
+                </span>
+              </p>
 
-            <p>Скорость: {line.speed} м/с</p>
-            <p>Нагрузка: {line.load}%</p>
-            <p>Камер: {line.cameraCount}</p>
-            <p>Тревог за час: {line.alertsLastHour}</p>
-          </div>
-        ))}
+              <p>Скорость: {line.speed} м/с</p>
+              <p>Нагрузка: {line.load}%</p>
+              <p>Камер: {line.cameraCount}</p>
+              <p>Тревог за час: {line.alertsLastHour}</p>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
