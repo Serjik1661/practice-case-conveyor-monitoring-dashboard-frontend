@@ -1,3 +1,4 @@
+import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { conveyorLines, incidents } from '../mocks/fixtures'
 
@@ -25,6 +26,42 @@ function IncidentPage() {
 
   const line = conveyorLines.find((item) => item.id === incident.lineId)
 
+  const [currentStatus, setCurrentStatus] = useState(incident.status)
+  const [currentAssignee, setCurrentAssignee] = useState(incident.assignee ?? '')
+  const [currentComment, setCurrentComment] = useState(incident.comment ?? '')
+  const [history, setHistory] = useState(incident.statusHistory)
+
+  const [formStatus, setFormStatus] = useState(incident.status)
+  const [formAssignee, setFormAssignee] = useState(incident.assignee ?? '')
+  const [formComment, setFormComment] = useState('')
+
+  const [error, setError] = useState('')
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (formStatus === 'resolved' && !formComment.trim()) {
+      setError('Для статуса "Решён" нужно обязательно написать комментарий.')
+      return
+    }
+
+    setError('')
+    setCurrentStatus(formStatus)
+    setCurrentAssignee(formAssignee)
+    setCurrentComment(formComment)
+
+    setHistory((prev) => [
+      ...prev,
+      {
+        status: formStatus,
+        changedAt: new Date().toISOString(),
+        comment: formComment.trim() ? formComment.trim() : undefined,
+      },
+    ])
+
+    setFormComment('')
+  }
+
   return (
     <div>
       <Link to="/incidents">← Назад к инцидентам</Link>
@@ -51,13 +88,15 @@ function IncidentPage() {
           <strong>Линия:</strong> {line ? line.name : 'Неизвестная линия'}
         </p>
         <p>
-          <strong>Статус:</strong> {getStatusLabel(incident.status)}
+          <strong>Статус:</strong> {getStatusLabel(currentStatus)}
         </p>
         <p>
-          <strong>Ответственный:</strong> {incident.assignee ?? 'Не назначен'}
+          <strong>Ответственный:</strong>{' '}
+          {currentAssignee ? currentAssignee : 'Не назначен'}
         </p>
         <p>
-          <strong>Комментарий:</strong> {incident.comment ?? 'Нет комментария'}
+          <strong>Комментарий:</strong>{' '}
+          {currentComment ? currentComment : 'Нет комментария'}
         </p>
         <p>
           <strong>Создан:</strong>{' '}
@@ -78,6 +117,109 @@ function IncidentPage() {
         <p>Здесь позже будет изображение и bbox-рамка детекции.</p>
       </div>
 
+      <div
+        style={{
+          border: '1px solid #444',
+          borderRadius: '12px',
+          padding: '16px',
+          marginTop: '20px',
+          textAlign: 'left',
+        }}
+      >
+        <h3>Изменить статус инцидента</h3>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginTop: '12px' }}>
+            <label>
+              Статус
+              <br />
+              <select
+                value={formStatus}
+                onChange={(event) =>
+                  setFormStatus(
+                    event.target.value as 'open' | 'in_progress' | 'resolved',
+                  )
+                }
+                style={{
+                  marginTop: '8px',
+                  padding: '8px',
+                  width: '100%',
+                  borderRadius: '8px',
+                }}
+              >
+                <option value="open">Открыт</option>
+                <option value="in_progress">В работе</option>
+                <option value="resolved">Решён</option>
+              </select>
+            </label>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            <label>
+              Ответственный
+              <br />
+              <input
+                type="text"
+                value={formAssignee}
+                onChange={(event) => setFormAssignee(event.target.value)}
+                placeholder="Введите имя"
+                style={{
+                  marginTop: '8px',
+                  padding: '8px',
+                  width: '100%',
+                  borderRadius: '8px',
+                }}
+              />
+            </label>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            <label>
+              Комментарий
+              <br />
+              <textarea
+                value={formComment}
+                onChange={(event) => setFormComment(event.target.value)}
+                placeholder="Введите комментарий"
+                rows={4}
+                style={{
+                  marginTop: '8px',
+                  padding: '8px',
+                  width: '100%',
+                  borderRadius: '8px',
+                }}
+              />
+            </label>
+          </div>
+
+          {error && (
+            <p
+              style={{
+                color: '#ef4444',
+                marginTop: '12px',
+              }}
+            >
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            style={{
+              marginTop: '16px',
+              padding: '10px 16px',
+              borderRadius: '8px',
+              border: '1px solid #444',
+              background: '#2563eb',
+              color: '#fff',
+              cursor: 'pointer',
+            }}
+          >
+            Сохранить изменения
+          </button>
+        </form>
+      </div>
+
       <div style={{ marginTop: '24px', textAlign: 'left' }}>
         <h3>История статусов</h3>
 
@@ -88,7 +230,7 @@ function IncidentPage() {
             marginTop: '16px',
           }}
         >
-          {incident.statusHistory.map((historyItem, index) => (
+          {history.map((historyItem, index) => (
             <div
               key={`${historyItem.status}-${historyItem.changedAt}-${index}`}
               style={{
