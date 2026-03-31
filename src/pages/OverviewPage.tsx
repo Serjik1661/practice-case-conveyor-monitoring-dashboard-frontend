@@ -1,5 +1,8 @@
 import type { ConveyorLine } from '../shared/types'
 import { conveyorLines } from '../mocks/fixtures'
+import { useSearchParams } from 'react-router-dom'
+
+type FilterStatus = 'all' | ConveyorLine['status']
 
 const statusLabels: Record<ConveyorLine['status'], string> = {
   active: 'Работает',
@@ -15,11 +18,76 @@ const statusColors: Record<ConveyorLine['status'], string> = {
   offline: '#6b7280',
 }
 
+const filterButtons: Array<{ value: FilterStatus; label: string }> = [
+  { value: 'all', label: 'Все' },
+  { value: 'active', label: 'Работает' },
+  { value: 'alarm', label: 'Тревога' },
+  { value: 'idle', label: 'Ожидание' },
+  { value: 'offline', label: 'Оффлайн' },
+]
+
 function OverviewPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const statusParam = searchParams.get('status')
+
+  const selectedStatus: FilterStatus =
+    statusParam === 'active' ||
+    statusParam === 'alarm' ||
+    statusParam === 'idle' ||
+    statusParam === 'offline'
+      ? statusParam
+      : 'all'
+
+  const filteredLines =
+    selectedStatus === 'all'
+      ? conveyorLines
+      : conveyorLines.filter((line) => line.status === selectedStatus)
+
+  const handleFilterChange = (status: FilterStatus) => {
+    if (status === 'all') {
+      setSearchParams({})
+      return
+    }
+
+    setSearchParams({ status })
+  }
+
   return (
     <div>
       <h2>Обзор</h2>
       <p>Ниже показаны тестовые конвейерные линии.</p>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: '10px',
+          flexWrap: 'wrap',
+          marginTop: '20px',
+          marginBottom: '20px',
+        }}
+      >
+        {filterButtons.map((button) => {
+          const isActive = selectedStatus === button.value
+
+          return (
+            <button
+              key={button.value}
+              onClick={() => handleFilterChange(button.value)}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: '1px solid #444',
+                background: isActive ? '#2563eb' : 'transparent',
+                color: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              {button.label}
+            </button>
+          )
+        })}
+      </div>
 
       <div
         style={{
@@ -29,7 +97,7 @@ function OverviewPage() {
           marginTop: '20px',
         }}
       >
-        {conveyorLines.map((line) => (
+        {filteredLines.map((line) => (
           <div
             key={line.id}
             style={{
