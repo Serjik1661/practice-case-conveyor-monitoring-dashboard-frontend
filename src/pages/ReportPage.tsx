@@ -1,4 +1,15 @@
 import { useState } from 'react'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  BarChart,
+  Bar,
+} from 'recharts'
 import { shiftReports } from '../mocks/fixtures'
 
 function ReportPage() {
@@ -135,22 +146,36 @@ function ReportPage() {
               textAlign: 'left',
             }}
           >
-            <h3>События по часам</h3>
+            <h3>График событий по часам</h3>
 
-            <div
-              style={{
-                display: 'grid',
-                gap: '10px',
-                marginTop: '16px',
-              }}
-            >
-              {report.byHour.map((item) => (
-                <div key={item.hour}>
-                  <p>
-                    {item.hour}:00 — {item.count}
-                  </p>
-                </div>
-              ))}
+            <div style={{ width: '100%', height: '300px', marginTop: '16px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={report.byHour}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="hour"
+                    stroke="#d1d5db"
+                    tickFormatter={(value) => `${value}:00`}
+                  />
+                  <YAxis stroke="#d1d5db" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#111827',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                    }}
+                    labelStyle={{ color: '#fff' }}
+                    formatter={(value) => [`${value}`, 'События']}
+                    labelFormatter={(label) => `Час: ${label}:00`}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#60a5fa"
+                    strokeWidth={3}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
@@ -163,22 +188,26 @@ function ReportPage() {
               textAlign: 'left',
             }}
           >
-            <h3>События по линиям</h3>
+            <h3>График событий по линиям</h3>
 
-            <div
-              style={{
-                display: 'grid',
-                gap: '10px',
-                marginTop: '16px',
-              }}
-            >
-              {report.byLine.map((item) => (
-                <div key={item.lineId}>
-                  <p>
-                    {item.lineName} — {item.count}
-                  </p>
-                </div>
-              ))}
+            <div style={{ width: '100%', height: '300px', marginTop: '16px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={report.byLine}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="lineName" stroke="#d1d5db" />
+                  <YAxis stroke="#d1d5db" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#111827',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                    }}
+                    labelStyle={{ color: '#fff' }}
+                    formatter={(value) => [`${value}`, 'События']}
+                  />
+                  <Bar dataKey="count" fill="#22c55e" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </>
