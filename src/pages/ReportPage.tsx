@@ -22,6 +22,47 @@ function ReportPage() {
     (item) => item.date === selectedDate && item.shift === selectedShift,
   )
 
+  const handleExportCsv = () => {
+  if (!report) return
+
+  const escapeCsvValue = (value: string | number) => {
+    return `"${String(value).replace(/"/g, '""')}"`
+  }
+
+  const rows: Array<Array<string | number>> = [
+    ['Дата', report.date],
+    ['Смена', report.shift],
+    ['Всего событий', report.totalEvents],
+    ['Критических событий', report.criticalEvents],
+    ['Среднее время реакции', report.avgResponseMinutes],
+    [],
+    ['События по часам'],
+    ['Час', 'Количество'],
+    ...report.byHour.map((item) => [`${item.hour}:00`, item.count]),
+    [],
+    ['События по линиям'],
+    ['Линия', 'Количество'],
+    ...report.byLine.map((item) => [item.lineName, item.count]),
+  ]
+
+  const csvContent = rows
+    .map((row) => row.map((cell) => escapeCsvValue(cell)).join(';'))
+    .join('\n')
+
+  const blob = new Blob(['\uFEFF' + csvContent], {
+    type: 'text/csv;charset=utf-8;',
+  })
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+
+  link.href = url
+  link.download = `report-${report.date}-${report.shift}.csv`
+  link.click()
+
+  URL.revokeObjectURL(url)
+}
+
   return (
     <div>
       <h2>Отчёт</h2>
@@ -75,6 +116,22 @@ function ReportPage() {
               <option value="night">Ночь</option>
             </select>
           </label>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+            <button
+                onClick={handleExportCsv}
+                disabled={!report}
+                style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                border: '1px solid #444',
+                background: report ? '#2563eb' : '#374151',
+                color: '#fff',
+                cursor: report ? 'pointer' : 'not-allowed',
+                }}
+                >
+                Экспорт в CSV
+            </button>
         </div>
       </div>
 
