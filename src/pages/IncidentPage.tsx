@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { conveyorLines, incidents } from '../mocks/fixtures'
+import type { ConveyorLine, Incident } from '../shared/types'
 
 type IncidentStatus = 'open' | 'in_progress' | 'resolved'
 
@@ -15,27 +15,92 @@ const getStatusLabel = (status: string) => {
 function IncidentPage() {
   const { id } = useParams()
 
-  const incident = incidents.find((item) => item.id === id)
-  const line = conveyorLines.find((item) => item.id === incident?.lineId)
+  const [incident, setIncident] = useState<Incident | null>(null)
+  const [lines, setLines] = useState<ConveyorLine[]>([])
 
-  const [currentStatus, setCurrentStatus] = useState<IncidentStatus>(
-    incident?.status ?? 'open',
-  )
-  const [currentAssignee, setCurrentAssignee] = useState(
-    incident?.assignee ?? '',
-  )
-  const [currentComment, setCurrentComment] = useState(
-    incident?.comment ?? '',
-  )
-  const [history, setHistory] = useState(incident?.statusHistory ?? [])
+  const [currentStatus, setCurrentStatus] = useState<IncidentStatus>('open')
+  const [currentAssignee, setCurrentAssignee] = useState('')
+  const [currentComment, setCurrentComment] = useState('')
+  const [history, setHistory] = useState<Incident['statusHistory']>([])
 
-  const [formStatus, setFormStatus] = useState<IncidentStatus>(
-    incident?.status ?? 'open',
-  )
-  const [formAssignee, setFormAssignee] = useState(incident?.assignee ?? '')
+  const [formStatus, setFormStatus] = useState<IncidentStatus>('open')
+  const [formAssignee, setFormAssignee] = useState('')
   const [formComment, setFormComment] = useState('')
 
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const loadIncident = async () => {
+      if (!id) {
+        setError('Не удалось определить инцидент')
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        setIsLoading(true)
+        setError('')
+
+        const [incidentResponse, linesResponse] = await Promise.all([
+          fetch(`/api/incidents/${id}`),
+          fetch('/api/lines'),
+        ])
+
+        if (incidentResponse.status === 404) {
+          setIncident(null)
+          return
+        }
+
+        if (!incidentResponse.ok || !linesResponse.ok) {
+          throw new Error('Ошибка загрузки')
+        }
+
+        const [incidentData, linesData] = await Promise.all([
+          incidentResponse.json(),
+          linesResponse.json(),
+        ])
+
+        setIncident(incidentData)
+        setLines(linesData)
+
+        setCurrentStatus(incidentData.status)
+        setCurrentAssignee(incidentData.assignee ?? '')
+        setCurrentComment(incidentData.comment ?? '')
+        setHistory(incidentData.statusHistory ?? [])
+
+        setFormStatus(incidentData.status)
+        setFormAssignee(incidentData.assignee ?? '')
+      } catch {
+        setError('Не удалось загрузить инцидент')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadIncident()
+  }, [id])
+
+  const line = lines.find((item) => item.id === incident?.lineId)
+
+  if (isLoading) {
+    return (
+      <div>
+        <h2>Инцидент</h2>
+        <p>Загрузка карточки...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div>
+        <h2>Инцидент</h2>
+        <p>{error}</p>
+        <Link to="/incidents">Вернуться к списку инцидентов</Link>
+      </div>
+    )
+  }
 
   if (!incident) {
     return (
