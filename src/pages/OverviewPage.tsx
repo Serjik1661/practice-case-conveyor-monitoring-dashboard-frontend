@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ConveyorLine } from '../shared/types'
 import { useSearchParams } from 'react-router-dom'
+import { startMockLineEvents, type LineEvent } from '../mocks/realtime'
 
 type FilterStatus = 'all' | ConveyorLine['status']
 
@@ -31,6 +32,12 @@ function OverviewPage() {
   const [lines, setLines] = useState<ConveyorLine[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [toasts, setToasts] = useState<
+    Array<{ id: number; message: string }>
+  >([])
+  const [notificationsCount, setNotificationsCount] = useState(0)
+  const toastIdRef = useRef(1)
+  const eventsStartedRef = useRef(false)
 
   useEffect(() => {
     const loadLines = async () => {
@@ -55,6 +62,49 @@ function OverviewPage() {
 
     loadLines()
   }, [])
+
+  useEffect(() => {
+    if (!import.meta.env.DEV || !lines.length || eventsStartedRef.current) {
+      return
+    }
+
+    const handleEvent = (event: LineEvent) => {
+      setLines((prev) =>
+        prev.map((line) =>
+          line.id === event.lineId
+            ? {
+                ...line,
+                status: event.status,
+                speed: event.speed,
+                load: event.load,
+                alertsLastHour:
+                  event.type === 'critical'
+                    ? line.alertsLastHour + 1
+                    : line.alertsLastHour,
+              }
+            : line,
+        ),
+      )
+
+      if (event.type === 'critical') {
+        const id = toastIdRef.current++
+        setNotificationsCount((prev) => prev + 1)
+        setToasts((prev) => [...prev, { id, message: event.message }])
+
+        window.setTimeout(() => {
+          setToasts((prev) => prev.filter((item) => item.id !== id))
+        }, 4000)
+      }
+    }
+
+    const stopEvents = startMockLineEvents(
+      lines.map((line) => line.id),
+      handleEvent,
+    )
+    eventsStartedRef.current = true
+
+    return () => stopEvents()
+  }, [lines])
 
   const statusParam = searchParams.get('status')
 
@@ -100,7 +150,20 @@ function OverviewPage() {
 
   return (
     <div>
-      <h2>Обзор</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <h2>Обзор</h2>
+        <span
+          style={{
+            background: '#1f2937',
+            border: '1px solid #374151',
+            borderRadius: '999px',
+            padding: '4px 10px',
+            fontSize: '12px',
+          }}
+        >
+          Уведомления: {notificationsCount}
+        </span>
+      </div>
       <p>Ниже показаны тестовые конвейерные линии.</p>
 
       <div
@@ -198,6 +261,34 @@ function OverviewPage() {
             </div>
           )
         })}
+      </div>
+
+      <div
+        style={{
+          position: 'fixed',
+          top: '16px',
+          right: '16px',
+          display: 'grid',
+          gap: '8px',
+          zIndex: 50,
+        }}
+      >
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            style={{
+              border: '1px solid #ef4444',
+              background: 'rgba(239, 68, 68, 0.12)',
+              color: '#fff',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              minWidth: '220px',
+              boxShadow: '0 6px 18px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            {toast.message}
+          </div>
+        ))}
       </div>
     </div>
   )
