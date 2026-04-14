@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw'
-import { conveyorLines, incidents } from './fixtures'
+import { conveyorLines, incidents, shiftReports } from './fixtures'
 
 export const handlers = [
   http.get('/api/lines', () => {
@@ -52,5 +52,24 @@ export const handlers = [
     ]
 
     return HttpResponse.json(incident)
+  }),
+  http.get('/api/reports', ({ request }) => {
+    const url = new URL(request.url)
+    const date = url.searchParams.get('date')
+    const shift = url.searchParams.get('shift')
+
+    if (!date || !shift) {
+      return new HttpResponse(null, { status: 400 })
+    }
+
+    const report = shiftReports.find(
+      (item) => item.date === date && item.shift === shift,
+    )
+
+    if (!report) {
+      return new HttpResponse(null, { status: 404 })
+    }
+
+    return HttpResponse.json(report)
   }),
 ]
