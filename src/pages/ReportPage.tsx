@@ -77,8 +77,7 @@ function ReportPage() {
 
     const csvContent = rows
       .map((row) => row.map((cell) => escapeCsvValue(cell)).join(';'))
-      .join('
-')
+      .join('\n')
 
     const blob = new Blob(['﻿' + csvContent], {
       type: 'text/csv;charset=utf-8;',

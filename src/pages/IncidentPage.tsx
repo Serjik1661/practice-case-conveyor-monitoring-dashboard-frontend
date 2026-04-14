@@ -35,7 +35,7 @@ function IncidentPage() {
   useEffect(() => {
     const loadIncident = async () => {
       if (!id) {
-        setError('Не удалось определить инцидент')
+        setLoadError('Не удалось определить инцидент')
         setIsLoading(false)
         return
       }
@@ -74,7 +74,7 @@ function IncidentPage() {
         setFormStatus(incidentData.status)
         setFormAssignee(incidentData.assignee ?? '')
       } catch {
-        setError('Не удалось загрузить инцидент')
+        setLoadError('Не удалось загрузить инцидент')
       } finally {
         setIsLoading(false)
       }
