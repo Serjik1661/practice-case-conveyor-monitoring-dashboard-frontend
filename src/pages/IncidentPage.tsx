@@ -28,7 +28,9 @@ function IncidentPage() {
   const [formComment, setFormComment] = useState('')
 
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     const loadIncident = async () => {
@@ -40,7 +42,7 @@ function IncidentPage() {
 
       try {
         setIsLoading(true)
-        setError('')
+        setLoadError('')
 
         const [incidentResponse, linesResponse] = await Promise.all([
           fetch(`/api/incidents/${id}`),
@@ -92,11 +94,11 @@ function IncidentPage() {
     )
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <div>
         <h2>Инцидент</h2>
-        <p>{error}</p>
+        <p>{loadError}</p>
         <Link to="/incidents">Вернуться к списку инцидентов</Link>
       </div>
     )
@@ -111,29 +113,55 @@ function IncidentPage() {
     )
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (formStatus === 'resolved' && !formComment.trim()) {
-      setError('Для статуса "Решён" нужно обязательно написать комментарий.')
+      setFormError('Comment is required for resolved status.')
       return
     }
 
-    setError('')
-    setCurrentStatus(formStatus)
-    setCurrentAssignee(formAssignee)
-    setCurrentComment(formComment)
+    if (!id) {
+      setFormError('Unable to determine incident id.')
+      return
+    }
 
-    setHistory((prev) => [
-      ...prev,
-      {
-        status: formStatus,
-        changedAt: new Date().toISOString(),
-        comment: formComment.trim() ? formComment.trim() : undefined,
-      },
-    ])
+    try {
+      setIsSaving(true)
+      setFormError('')
 
-    setFormComment('')
+      const response = await fetch(`/api/incidents/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: formStatus,
+          assignee: formAssignee.trim() ? formAssignee.trim() : null,
+          comment: formComment.trim() ? formComment.trim() : null,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Save error')
+      }
+
+      const updatedIncident: Incident = await response.json()
+
+      setIncident(updatedIncident)
+      setCurrentStatus(updatedIncident.status)
+      setCurrentAssignee(updatedIncident.assignee ?? '')
+      setCurrentComment(updatedIncident.comment ?? '')
+      setHistory(updatedIncident.statusHistory ?? [])
+
+      setFormStatus(updatedIncident.status)
+      setFormAssignee(updatedIncident.assignee ?? '')
+      setFormComment('')
+    } catch {
+      setFormError('Failed to save changes')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -188,7 +216,43 @@ function IncidentPage() {
         }}
       >
         <h3>Снимок детекции</h3>
-        <p>Здесь позже будет изображение и bbox-рамка детекции.</p>
+        <p>Below is a basic block for snapshot and bbox.</p>
+        <div
+          style={{
+            marginTop: '12px',
+            background: 'linear-gradient(135deg, #1f2937, #0f172a)',
+            borderRadius: '12px',
+            height: '220px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: '28%',
+              left: '18%',
+              width: '40%',
+              height: '35%',
+              border: '2px solid #22c55e',
+              borderRadius: '8px',
+              boxShadow: '0 0 12px rgba(34, 197, 94, 0.5)',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '12px',
+              left: '12px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              background: 'rgba(0,0,0,0.5)',
+              fontSize: '12px',
+            }}
+          >
+            bbox: sample
+          </div>
+        </div>
       </div>
 
       <div
@@ -266,30 +330,32 @@ function IncidentPage() {
             </label>
           </div>
 
-          {error && (
+          {formError && (
             <p
               style={{
                 color: '#ef4444',
                 marginTop: '12px',
               }}
             >
-              {error}
+              {formError}
             </p>
           )}
 
           <button
             type="submit"
+            disabled={isSaving}
             style={{
               marginTop: '16px',
               padding: '10px 16px',
               borderRadius: '8px',
               border: '1px solid #444',
-              background: '#2563eb',
+              background: isSaving ? '#1e40af' : '#2563eb',
               color: '#fff',
-              cursor: 'pointer',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.8 : 1,
             }}
           >
-            Сохранить изменения
+            {isSaving ? 'Saving...' : 'Save changes'}
           </button>
         </form>
       </div>
