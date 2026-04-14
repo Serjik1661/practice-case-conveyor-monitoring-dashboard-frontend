@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { ConveyorLine, Incident } from '../shared/types'
 
-const incidentStatusLabels = {
+const incidentStatusLabels: Record<Incident['status'], string> = {
   open: 'Открыт',
   in_progress: 'В работе',
   resolved: 'Решён',

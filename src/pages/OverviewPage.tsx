@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import type { ConveyorLine } from '../shared/types'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import type { ConveyorLine } from '../shared/types'
 import { startMockLineEvents, type LineEvent } from '../mocks/realtime'
 
 type FilterStatus = 'all' | ConveyorLine['status']
@@ -9,7 +9,7 @@ const statusLabels: Record<ConveyorLine['status'], string> = {
   active: 'Работает',
   alarm: 'Тревога',
   idle: 'Ожидание',
-  offline: 'Оффлайн',
+  offline: 'Офлайн',
 }
 
 const statusColors: Record<ConveyorLine['status'], string> = {
@@ -24,7 +24,7 @@ const filterButtons: Array<{ value: FilterStatus; label: string }> = [
   { value: 'active', label: 'Работает' },
   { value: 'alarm', label: 'Тревога' },
   { value: 'idle', label: 'Ожидание' },
-  { value: 'offline', label: 'Оффлайн' },
+  { value: 'offline', label: 'Офлайн' },
 ]
 
 function OverviewPage() {
@@ -32,12 +32,10 @@ function OverviewPage() {
   const [lines, setLines] = useState<ConveyorLine[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [toasts, setToasts] = useState<
-    Array<{ id: number; message: string }>
-  >([])
+  const [toasts, setToasts] = useState<Array<{ id: number; message: string }>>(
+    [],
+  )
   const [notificationsCount, setNotificationsCount] = useState(0)
-  const toastIdRef = useRef(1)
-  const eventsStartedRef = useRef(false)
 
   useEffect(() => {
     const loadLines = async () => {
@@ -48,7 +46,7 @@ function OverviewPage() {
         const response = await fetch('/api/lines')
 
         if (!response.ok) {
-          throw new Error('Ошибка загрузки')
+          throw new Error('Ошибка загрузки линий')
         }
 
         const data: ConveyorLine[] = await response.json()
@@ -64,47 +62,44 @@ function OverviewPage() {
   }, [])
 
   useEffect(() => {
-    if (!import.meta.env.DEV || !lines.length || eventsStartedRef.current) {
+    if (!lines.length) {
       return
-    }
-
-    const handleEvent = (event: LineEvent) => {
-      setLines((prev) =>
-        prev.map((line) =>
-          line.id === event.lineId
-            ? {
-                ...line,
-                status: event.status,
-                speed: event.speed,
-                load: event.load,
-                alertsLastHour:
-                  event.type === 'critical'
-                    ? line.alertsLastHour + 1
-                    : line.alertsLastHour,
-              }
-            : line,
-        ),
-      )
-
-      if (event.type === 'critical') {
-        const id = toastIdRef.current++
-        setNotificationsCount((prev) => prev + 1)
-        setToasts((prev) => [...prev, { id, message: event.message }])
-
-        window.setTimeout(() => {
-          setToasts((prev) => prev.filter((item) => item.id !== id))
-        }, 4000)
-      }
     }
 
     const stopEvents = startMockLineEvents(
       lines.map((line) => line.id),
-      handleEvent,
+      (event: LineEvent) => {
+        setLines((prev) =>
+          prev.map((line) =>
+            line.id === event.lineId
+              ? {
+                  ...line,
+                  status: event.status,
+                  speed: event.speed,
+                  load: event.load,
+                  alertsLastHour:
+                    event.type === 'critical'
+                      ? line.alertsLastHour + 1
+                      : line.alertsLastHour,
+                }
+              : line,
+          ),
+        )
+
+        if (event.type === 'critical') {
+          const toastId = Date.now() + Math.random()
+          setNotificationsCount((prev) => prev + 1)
+          setToasts((prev) => [...prev, { id: toastId, message: event.message }])
+
+          window.setTimeout(() => {
+            setToasts((prev) => prev.filter((item) => item.id !== toastId))
+          }, 4000)
+        }
+      },
     )
-    eventsStartedRef.current = true
 
     return () => stopEvents()
-  }, [lines])
+  }, [lines.length])
 
   const statusParam = searchParams.get('status')
 
