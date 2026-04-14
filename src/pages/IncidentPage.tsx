@@ -5,9 +5,9 @@ import type { ConveyorLine, Incident } from '../shared/types'
 type IncidentStatus = 'open' | 'in_progress' | 'resolved'
 
 const getStatusLabel = (status: string) => {
-  if (status === 'open') return '??????'
-  if (status === 'in_progress') return '? ??????'
-  if (status === 'resolved') return '?????'
+  if (status === 'open') return 'Открыт'
+  if (status === 'in_progress') return 'В работе'
+  if (status === 'resolved') return 'Решён'
 
   return status
 }
@@ -35,7 +35,7 @@ function IncidentPage() {
   useEffect(() => {
     const loadIncident = async () => {
       if (!id) {
-        setLoadError('?? ??????? ?????????? ????????.')
+        setLoadError('Не удалось определить инцидент.')
         setIsLoading(false)
         return
       }
@@ -55,7 +55,7 @@ function IncidentPage() {
         }
 
         if (!incidentResponse.ok || !linesResponse.ok) {
-          throw new Error('?????? ????????')
+          throw new Error('Ошибка загрузки')
         }
 
         const [incidentData, linesData] = await Promise.all([
@@ -74,7 +74,7 @@ function IncidentPage() {
         setFormStatus(incidentData.status)
         setFormAssignee(incidentData.assignee ?? '')
       } catch {
-        setLoadError('?? ??????? ????????? ????????.')
+        setLoadError('Не удалось загрузить инцидент.')
       } finally {
         setIsLoading(false)
       }
@@ -88,8 +88,8 @@ function IncidentPage() {
   if (isLoading) {
     return (
       <div>
-        <h2>????????</h2>
-        <p>???????? ????????...</p>
+        <h2>Инцидент</h2>
+        <p>Загрузка карточки...</p>
       </div>
     )
   }
@@ -97,9 +97,9 @@ function IncidentPage() {
   if (loadError) {
     return (
       <div>
-        <h2>????????</h2>
+        <h2>Инцидент</h2>
         <p>{loadError}</p>
-        <Link to="/incidents">????????? ? ?????? ??????????</Link>
+        <Link to="/incidents">Вернуться к списку инцидентов</Link>
       </div>
     )
   }
@@ -107,8 +107,8 @@ function IncidentPage() {
   if (!incident) {
     return (
       <div>
-        <h2>???????? ?? ??????</h2>
-        <Link to="/incidents">????????? ? ?????? ??????????</Link>
+        <h2>Инцидент не найден</h2>
+        <Link to="/incidents">Вернуться к списку инцидентов</Link>
       </div>
     )
   }
@@ -117,12 +117,12 @@ function IncidentPage() {
     event.preventDefault()
 
     if (formStatus === 'resolved' && !formComment.trim()) {
-      setFormError('??? ??????? "?????" ????? ???????????.')
+      setFormError('Для статуса "Решён" нужен комментарий.')
       return
     }
 
     if (!id) {
-      setFormError('?? ??????? ?????????? ????????.')
+      setFormError('Не удалось определить инцидент.')
       return
     }
 
@@ -143,7 +143,7 @@ function IncidentPage() {
       })
 
       if (!response.ok) {
-        throw new Error('?????? ??????????')
+        throw new Error('Ошибка сохранения')
       }
 
       const updatedIncident: Incident = await response.json()
@@ -158,7 +158,7 @@ function IncidentPage() {
       setFormAssignee(updatedIncident.assignee ?? '')
       setFormComment('')
     } catch {
-      setFormError('?? ??????? ????????? ?????????.')
+      setFormError('Не удалось сохранить изменения.')
     } finally {
       setIsSaving(false)
     }
@@ -166,10 +166,10 @@ function IncidentPage() {
 
   return (
     <div>
-      <Link to="/incidents">? ????? ? ??????????</Link>
+      <Link to="/incidents">← Назад к инцидентам</Link>
 
-      <h2 style={{ marginTop: '16px' }}>???????? ?????????</h2>
-      <p>???? ???????? ????????? ?????????? ?? ?????????? ?????????.</p>
+      <h2 style={{ marginTop: '16px' }}>Карточка инцидента</h2>
+      <p>Ниже показана подробная информация по выбранному инциденту.</p>
 
       <div
         style={{
@@ -184,24 +184,24 @@ function IncidentPage() {
           <strong>ID:</strong> {incident.id}
         </p>
         <p>
-          <strong>ID ???????:</strong> {incident.eventId}
+          <strong>ID события:</strong> {incident.eventId}
         </p>
         <p>
-          <strong>?????:</strong> {line ? line.name : '??????????? ?????'}
+          <strong>Линия:</strong> {line ? line.name : 'Неизвестная линия'}
         </p>
         <p>
-          <strong>??????:</strong> {getStatusLabel(currentStatus)}
+          <strong>Статус:</strong> {getStatusLabel(currentStatus)}
         </p>
         <p>
-          <strong>?????????????:</strong>{' '}
-          {currentAssignee ? currentAssignee : '?? ????????'}
+          <strong>Ответственный:</strong>{' '}
+          {currentAssignee ? currentAssignee : 'Не назначен'}
         </p>
         <p>
-          <strong>???????????:</strong>{' '}
-          {currentComment ? currentComment : '??? ???????????'}
+          <strong>Комментарий:</strong>{' '}
+          {currentComment ? currentComment : 'Нет комментария'}
         </p>
         <p>
-          <strong>??????:</strong>{' '}
+          <strong>Создан:</strong>{' '}
           {new Date(incident.createdAt).toLocaleString('ru-RU')}
         </p>
       </div>
@@ -215,8 +215,8 @@ function IncidentPage() {
           textAlign: 'left',
         }}
       >
-        <h3>?????? ????????</h3>
-        <p>???? ??????? ???? ??? ?????? ? bbox-?????.</p>
+        <h3>Снимок детекции</h3>
+        <p>Ниже базовый блок для снимка и bbox-рамки.</p>
         <div
           style={{
             marginTop: '12px',
@@ -250,7 +250,7 @@ function IncidentPage() {
               fontSize: '12px',
             }}
           >
-            bbox: ??????
+            bbox: пример
           </div>
         </div>
       </div>
@@ -264,12 +264,12 @@ function IncidentPage() {
           textAlign: 'left',
         }}
       >
-        <h3>???????? ?????? ?????????</h3>
+        <h3>Изменить статус инцидента</h3>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginTop: '12px' }}>
             <label>
-              ??????
+              Статус
               <br />
               <select
                 value={formStatus}
@@ -285,22 +285,22 @@ function IncidentPage() {
                   borderRadius: '8px',
                 }}
               >
-                <option value="open">??????</option>
-                <option value="in_progress">? ??????</option>
-                <option value="resolved">?????</option>
+                <option value="open">Открыт</option>
+                <option value="in_progress">В работе</option>
+                <option value="resolved">Решён</option>
               </select>
             </label>
           </div>
 
           <div style={{ marginTop: '16px' }}>
             <label>
-              ?????????????
+              Ответственный
               <br />
               <input
                 type="text"
                 value={formAssignee}
                 onChange={(event) => setFormAssignee(event.target.value)}
-                placeholder="??????? ???"
+                placeholder="Введите имя"
                 style={{
                   marginTop: '8px',
                   padding: '8px',
@@ -313,12 +313,12 @@ function IncidentPage() {
 
           <div style={{ marginTop: '16px' }}>
             <label>
-              ???????????
+              Комментарий
               <br />
               <textarea
                 value={formComment}
                 onChange={(event) => setFormComment(event.target.value)}
-                placeholder="??????? ???????????"
+                placeholder="Введите комментарий"
                 rows={4}
                 style={{
                   marginTop: '8px',
@@ -355,13 +355,13 @@ function IncidentPage() {
               opacity: isSaving ? 0.8 : 1,
             }}
           >
-            {isSaving ? '??????????...' : '????????? ?????????'}
+            {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
           </button>
         </form>
       </div>
 
       <div style={{ marginTop: '24px', textAlign: 'left' }}>
-        <h3>??????? ????????</h3>
+        <h3>История статусов</h3>
 
         <div
           style={{
@@ -379,15 +379,15 @@ function IncidentPage() {
               }}
             >
               <p>
-                <strong>??????:</strong> {getStatusLabel(historyItem.status)}
+                <strong>Статус:</strong> {getStatusLabel(historyItem.status)}
               </p>
               <p>
-                <strong>?????:</strong>{' '}
+                <strong>Время:</strong>{' '}
                 {new Date(historyItem.changedAt).toLocaleString('ru-RU')}
               </p>
               <p>
-                <strong>???????????:</strong>{' '}
-                {historyItem.comment ?? '??? ???????????'}
+                <strong>Комментарий:</strong>{' '}
+                {historyItem.comment ?? 'Без комментария'}
               </p>
             </div>
           ))}

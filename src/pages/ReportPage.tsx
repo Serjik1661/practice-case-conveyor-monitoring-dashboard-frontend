@@ -37,13 +37,13 @@ function ReportPage() {
         }
 
         if (!response.ok) {
-          throw new Error('?????? ????????')
+          throw new Error('Ошибка загрузки')
         }
 
         const data: ShiftReport = await response.json()
         setReport(data)
       } catch {
-        setError('?? ??????? ????????? ?????')
+        setError('Не удалось загрузить отчёт')
       } finally {
         setIsLoading(false)
       }
@@ -60,18 +60,18 @@ function ReportPage() {
     }
 
     const rows: Array<Array<string | number>> = [
-      ['????', report.date],
-      ['?????', report.shift],
-      ['????? ???????', report.totalEvents],
-      ['??????????? ???????', report.criticalEvents],
-      ['??????? ????? ???????', report.avgResponseMinutes],
+      ['Дата', report.date],
+      ['Смена', report.shift],
+      ['Всего событий', report.totalEvents],
+      ['Критических событий', report.criticalEvents],
+      ['Среднее время реакции', report.avgResponseMinutes],
       [],
-      ['??????? ?? ?????'],
-      ['???', '??????????'],
+      ['События по часам'],
+      ['Час', 'Количество'],
       ...report.byHour.map((item) => [`${item.hour}:00`, item.count]),
       [],
-      ['??????? ?? ??????'],
-      ['?????', '??????????'],
+      ['События по линиям'],
+      ['Линия', 'Количество'],
       ...report.byLine.map((item) => [item.lineName, item.count]),
     ]
 
@@ -79,7 +79,7 @@ function ReportPage() {
       .map((row) => row.map((cell) => escapeCsvValue(cell)).join(';'))
       .join('\n')
 
-    const blob = new Blob(['﻿' + csvContent], {
+    const blob = new Blob(['\uFEFF' + csvContent], {
       type: 'text/csv;charset=utf-8;',
     })
 
@@ -95,8 +95,8 @@ function ReportPage() {
 
   return (
     <div>
-      <h2>?????</h2>
-      <p>???? ??????? ???????? ????? ?? ????????? ???? ? ?????.</p>
+      <h2>Отчёт</h2>
+      <p>Ниже показан тестовый отчёт по выбранной дате и смене.</p>
 
       <div
         style={{
@@ -109,7 +109,7 @@ function ReportPage() {
       >
         <div>
           <label>
-            ????
+            Дата
             <br />
             <input
               type="date"
@@ -126,7 +126,7 @@ function ReportPage() {
 
         <div>
           <label>
-            ?????
+            Смена
             <br />
             <select
               value={selectedShift}
@@ -141,9 +141,9 @@ function ReportPage() {
                 borderRadius: '8px',
               }}
             >
-              <option value="morning">????</option>
-              <option value="day">????</option>
-              <option value="night">????</option>
+              <option value="morning">Утро</option>
+              <option value="day">День</option>
+              <option value="night">Ночь</option>
             </select>
           </label>
         </div>
@@ -160,7 +160,7 @@ function ReportPage() {
               cursor: report ? 'pointer' : 'not-allowed',
             }}
           >
-            ??????? ? CSV
+            Экспорт в CSV
           </button>
         </div>
       </div>
@@ -175,7 +175,7 @@ function ReportPage() {
             textAlign: 'left',
           }}
         >
-          <p>???????? ??????...</p>
+          <p>Загрузка отчёта...</p>
         </div>
       ) : error ? (
         <div
@@ -199,7 +199,7 @@ function ReportPage() {
             textAlign: 'left',
           }}
         >
-          <p>??? ????????? ???? ? ????? ?????? ???? ???.</p>
+          <p>Для выбранной даты и смены данных пока нет.</p>
         </div>
       ) : (
         <>
@@ -219,7 +219,7 @@ function ReportPage() {
                 textAlign: 'left',
               }}
             >
-              <h3>????? ???????</h3>
+              <h3>Всего событий</h3>
               <p>{report.totalEvents}</p>
             </div>
 
@@ -231,7 +231,7 @@ function ReportPage() {
                 textAlign: 'left',
               }}
             >
-              <h3>??????????? ???????</h3>
+              <h3>Критических событий</h3>
               <p>{report.criticalEvents}</p>
             </div>
 
@@ -243,8 +243,8 @@ function ReportPage() {
                 textAlign: 'left',
               }}
             >
-              <h3>??????? ????? ???????</h3>
-              <p>{report.avgResponseMinutes} ???</p>
+              <h3>Среднее время реакции</h3>
+              <p>{report.avgResponseMinutes} мин</p>
             </div>
           </div>
 
@@ -257,7 +257,7 @@ function ReportPage() {
               textAlign: 'left',
             }}
           >
-            <h3>?????? ??????? ?? ?????</h3>
+            <h3>График событий по часам</h3>
 
             <div style={{ width: '100%', height: '300px', marginTop: '16px' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -276,8 +276,8 @@ function ReportPage() {
                       borderRadius: '8px',
                     }}
                     labelStyle={{ color: '#fff' }}
-                    formatter={(value) => [`${value}`, '???????']}
-                    labelFormatter={(label) => `???: ${label}:00`}
+                    formatter={(value) => [`${value}`, 'События']}
+                    labelFormatter={(label) => `Час: ${label}:00`}
                   />
                   <Line
                     type="monotone"
@@ -299,7 +299,7 @@ function ReportPage() {
               textAlign: 'left',
             }}
           >
-            <h3>?????? ??????? ?? ??????</h3>
+            <h3>График событий по линиям</h3>
 
             <div style={{ width: '100%', height: '300px', marginTop: '16px' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -314,7 +314,7 @@ function ReportPage() {
                       borderRadius: '8px',
                     }}
                     labelStyle={{ color: '#fff' }}
-                    formatter={(value) => [`${value}`, '???????']}
+                    formatter={(value) => [`${value}`, 'События']}
                   />
                   <Bar dataKey="count" fill="#22c55e" radius={[6, 6, 0, 0]} />
                 </BarChart>
