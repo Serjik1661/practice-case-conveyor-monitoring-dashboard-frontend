@@ -1,5 +1,5 @@
+import { useEffect, useState } from 'react'
 import type { ConveyorLine } from '../shared/types'
-import { conveyorLines } from '../mocks/fixtures'
 import { useSearchParams } from 'react-router-dom'
 
 type FilterStatus = 'all' | ConveyorLine['status']
@@ -28,6 +28,33 @@ const filterButtons: Array<{ value: FilterStatus; label: string }> = [
 
 function OverviewPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [lines, setLines] = useState<ConveyorLine[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const loadLines = async () => {
+      try {
+        setIsLoading(true)
+        setError('')
+
+        const response = await fetch('/api/lines')
+
+        if (!response.ok) {
+          throw new Error('Ошибка загрузки')
+        }
+
+        const data: ConveyorLine[] = await response.json()
+        setLines(data)
+      } catch {
+        setError('Не удалось загрузить линии')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadLines()
+  }, [])
 
   const statusParam = searchParams.get('status')
 
@@ -41,8 +68,8 @@ function OverviewPage() {
 
   const filteredLines =
     selectedStatus === 'all'
-      ? conveyorLines
-      : conveyorLines.filter((line) => line.status === selectedStatus)
+      ? lines
+      : lines.filter((line) => line.status === selectedStatus)
 
   const handleFilterChange = (status: FilterStatus) => {
     if (status === 'all') {
@@ -51,6 +78,24 @@ function OverviewPage() {
     }
 
     setSearchParams({ status })
+  }
+
+  if (isLoading) {
+    return (
+      <div>
+        <h2>Обзор</h2>
+        <p>Загрузка линий...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div>
+        <h2>Обзор</h2>
+        <p>{error}</p>
+      </div>
+    )
   }
 
   return (
